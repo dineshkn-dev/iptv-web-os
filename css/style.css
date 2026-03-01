@@ -45,6 +45,35 @@ body {
   margin-top: 0.25rem;
 }
 
+.playlist-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.playlist-selector label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.playlist-selector select {
+  padding: 0.35rem 0.75rem;
+  background: var(--bg-dark);
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.875rem;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.playlist-selector select:hover,
+.playlist-selector select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
 .main {
   display: flex;
   flex: 1;

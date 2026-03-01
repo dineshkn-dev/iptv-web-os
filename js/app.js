@@ -1,9 +1,15 @@
-const M3U_URL = 'https://raw.githubusercontent.com/dineshkn-dev/mylinks/main/south_indian_playlist.m3u';
+const PLAYLISTS = {
+  'south-indian': 'https://raw.githubusercontent.com/dineshkn-dev/mylinks/main/south_indian_playlist.m3u',
+  'sports-all': 'm3u-links/1-IPTV Sports All Channels List.m3u',
+  'sports-m3u': 'm3u-links/4-IPTV Sports List M3u Channels.m3u',
+  'sports-being': 'm3u-links/ONLY BEING SPORTS Channel 1, to 17.m3u',
+};
 
 const video = document.getElementById('video');
 const channelList = document.getElementById('channelList');
 const groupsContainer = document.getElementById('groups');
 const searchInput = document.getElementById('search');
+const playlistSelect = document.getElementById('playlist');
 const placeholder = document.getElementById('placeholder');
 const loading = document.getElementById('loading');
 const errorEl = document.getElementById('error');
@@ -157,9 +163,14 @@ searchInput.addEventListener('input', () => {
 });
 
 async function loadPlaylist() {
+  const id = playlistSelect.value;
+  const url = PLAYLISTS[id];
+  if (!url) return;
   try {
     loading.classList.add('visible');
-    const res = await fetch(M3U_URL);
+    const fetchUrl = url.startsWith('http') ? url : encodeURI(url);
+    const res = await fetch(fetchUrl);
+    if (!res.ok) throw new Error(res.statusText);
     const text = await res.text();
     channels = parseM3U(text);
     renderGroups();
@@ -173,4 +184,5 @@ async function loadPlaylist() {
   }
 }
 
+playlistSelect.addEventListener('change', loadPlaylist);
 loadPlaylist();

@@ -10,8 +10,20 @@
 <body>
   <div class="app">
     <header class="header">
-      <h1>South Indian Channels</h1>
-      <p class="subtitle">Tamil • Telugu • Kannada • Hindi • English</p>
+      <h1>IPTV Player</h1>
+      <div class="playlist-selector">
+        <label for="playlist">Playlist:</label>
+        <select id="playlist">
+          <optgroup label="South Indian">
+            <option value="south-indian">South Indian Channels</option>
+          </optgroup>
+          <optgroup label="Sports">
+            <option value="sports-all">Sports – All Channels</option>
+            <option value="sports-m3u">Sports – M3U Channels</option>
+            <option value="sports-being">Sports – Being Sports</option>
+          </optgroup>
+        </select>
+      </div>
     </header>
 
     <main class="main">
