@@ -13,10 +13,9 @@ A web-based M3U player for South Indian channels. Works on GitHub Pages.
 
 1. Push this repo to GitHub
 2. Go to **Settings → Pages**
-3. Under "Build and deployment", set **Source** to "Deploy from a branch"
-4. Select branch `main` and folder `/ (root)`
-5. Click **Save**
-6. Your site will be live at `https://<username>.github.io/<repo-name>/`
+3. Under "Build and deployment", set **Source** to **GitHub Actions**
+4. Push to `main` (or merge a PR) — the workflow deploys automatically
+5. Your site will be live at `https://<username>.github.io/<repo-name>/`
 
 ## Local Development
 
