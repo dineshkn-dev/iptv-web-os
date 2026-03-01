@@ -11,41 +11,38 @@
   <div class="app">
     <header class="header">
       <h1>IPTV Player</h1>
-      <div class="playlist-selector">
-        <label for="playlist">Playlist:</label>
-        <select id="playlist">
-          <optgroup label="South Indian">
-            <option value="south-indian">South Indian Channels</option>
-          </optgroup>
-          <optgroup label="Sports">
-            <option value="sports-all">Sports – All Channels</option>
-            <option value="sports-m3u">Sports – M3U Channels</option>
-            <option value="sports-being">Sports – Being Sports</option>
-          </optgroup>
-        </select>
-      </div>
     </header>
 
     <main class="main">
+      <aside class="category-panel">
+        <div class="category-list" id="categoryList"></div>
+      </aside>
       <aside class="sidebar">
         <div class="search-box">
-          <input type="text" id="search" placeholder="Search channels..." autocomplete="off">
+          <input type="text" id="search" placeholder="Search channels..." autocomplete="off" tabindex="0">
         </div>
-        <div class="groups" id="groups"></div>
         <div class="channel-list" id="channelList"></div>
       </aside>
 
       <section class="player-section">
-        <div class="video-container">
-          <video id="video" controls playsinline crossorigin="anonymous"></video>
+        <div class="video-container" id="videoContainer" tabindex="0">
+          <video id="video" playsinline crossorigin="anonymous" tabindex="-1"></video>
           <div class="placeholder" id="placeholder">
             <p>Select a channel to start watching</p>
+            <p class="hint">Use ↑↓ to browse • Enter to select • Ch+ / Ch− to switch</p>
           </div>
           <div class="loading" id="loading">
             <span class="spinner"></span>
             <p>Loading...</p>
           </div>
           <div class="error" id="error"></div>
+          <div class="channel-toast" id="channelToast"></div>
+          <div class="video-controls" id="videoControls">
+            <button class="ctrl-btn" id="btnChPrev" title="Previous channel (Ch−)" tabindex="0">Ch−</button>
+            <button class="ctrl-btn" id="btnPlayPause" title="Play / Pause" tabindex="0">▶ / ⏸</button>
+            <button class="ctrl-btn" id="btnChNext" title="Next channel (Ch+)" tabindex="0">Ch+</button>
+            <button class="ctrl-btn" id="btnFullscreen" title="Fullscreen" tabindex="0">⛶</button>
+          </div>
         </div>
         <div class="now-playing" id="nowPlaying"></div>
       </section>
