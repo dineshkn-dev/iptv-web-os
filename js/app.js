@@ -1,9 +1,51 @@
-const PLAYLISTS = {
+// Remote playlists (manually managed)
+const REMOTE_PLAYLISTS = {
   'south-indian': { url: 'https://raw.githubusercontent.com/dineshkn-dev/mylinks/main/south_indian_playlist.m3u', label: 'South Indian', type: 'link' },
-  'sports-all': { url: 'm3u-links/1-IPTV Sports All Channels List.m3u', label: 'Sports – All Channels', type: 'local' },
-  'sports-m3u': { url: 'm3u-links/4-IPTV Sports List M3u Channels.m3u', label: 'Sports – M3U Channels', type: 'local' },
-  'sports-being': { url: 'm3u-links/ONLY BEING SPORTS Channel 1, to 17.m3u', label: 'Sports – Being Sports', type: 'local' },
 };
+
+// All playlists (remote + auto-discovered local) — populated at startup
+const PLAYLISTS = { ...REMOTE_PLAYLISTS };
+
+// Derive a clean display label from a filename
+function labelFromFilename(filename) {
+  return filename
+    .replace(/\.m3u8?$/i, '')          // strip extension
+    .replace(/^\d+[-_.]\s*/, '')        // strip leading "1-", "4-" etc.
+    .replace(/[_]+/g, ' ')              // underscores → spaces
+    .replace(/\.(?!\s)/g, ' ')          // dots → spaces (except before space)
+    .replace(/\s{2,}/g, ' ')            // collapse whitespace
+    .trim();
+}
+
+// Derive a slug id from a filename
+function idFromFilename(filename) {
+  return 'local-' + filename
+    .replace(/\.m3u8?$/i, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+// Fetch m3u-links/index.json and register each file as a playlist
+async function discoverLocalPlaylists() {
+  try {
+    const res = await fetch('m3u-links/index.json');
+    if (!res.ok) return;
+    const files = await res.json();
+    files.forEach(filename => {
+      const id = idFromFilename(filename);
+      if (!PLAYLISTS[id]) {
+        PLAYLISTS[id] = {
+          url: `m3u-links/${filename}`,
+          label: labelFromFilename(filename),
+          type: 'local',
+        };
+      }
+    });
+  } catch (e) {
+    console.warn('Could not load m3u-links manifest:', e);
+  }
+}
 
 const video = document.getElementById('video');
 const channelList = document.getElementById('channelList');
@@ -72,19 +114,31 @@ function selectCategory(type, value) {
 
 function renderCategories() {
   const groups = getUniqueGroups();
+  const remoteIds = Object.keys(PLAYLISTS).filter(id => PLAYLISTS[id].type === 'link');
+  const localIds = Object.keys(PLAYLISTS).filter(id => PLAYLISTS[id].type === 'local');
   let html = '';
 
-  html += '<div class="category-section"><span class="category-section-title">Link</span>';
-  html += `<div class="category-item ${selectedPlaylistId === 'south-indian' && !selectedGroup ? 'active' : ''}" data-type="playlist" data-value="south-indian" tabindex="0" role="button">South Indian</div>`;
-  html += '</div>';
+  // Remote playlists
+  if (remoteIds.length > 0) {
+    html += '<div class="category-section"><span class="category-section-title">Remote</span>';
+    remoteIds.forEach(id => {
+      const active = selectedPlaylistId === id && !selectedGroup;
+      html += `<div class="category-item ${active ? 'active' : ''}" data-type="playlist" data-value="${id}" tabindex="0" role="button">${PLAYLISTS[id].label}</div>`;
+    });
+    html += '</div>';
+  }
 
-  html += '<div class="category-section"><span class="category-section-title">Local</span>';
-  ['sports-all', 'sports-m3u', 'sports-being'].forEach(id => {
-    const active = selectedPlaylistId === id && !selectedGroup;
-    html += `<div class="category-item ${active ? 'active' : ''}" data-type="playlist" data-value="${id}" tabindex="0" role="button">${PLAYLISTS[id].label}</div>`;
-  });
-  html += '</div>';
+  // Local playlists (auto-discovered)
+  if (localIds.length > 0) {
+    html += '<div class="category-section"><span class="category-section-title">Local</span>';
+    localIds.forEach(id => {
+      const active = selectedPlaylistId === id && !selectedGroup;
+      html += `<div class="category-item ${active ? 'active' : ''}" data-type="playlist" data-value="${id}" tabindex="0" role="button">${PLAYLISTS[id].label}</div>`;
+    });
+    html += '</div>';
+  }
 
+  // Channel groups (within loaded playlist)
   if (groups.length > 0) {
     html += '<div class="category-section"><span class="category-section-title">Groups</span>';
     html += `<div class="category-item ${!selectedGroup ? 'active' : ''}" data-type="group" data-value="" tabindex="0" role="button">All</div>`;
@@ -124,19 +178,22 @@ function filterChannels(search = '', group = '') {
   }
   filteredChannels = filtered;
   focusedChannelIndex = -1;
-  renderChannelList(filtered);
+  renderChannelList(filteredChannels);
 }
 
 function renderChannelList(list) {
-  channelList.innerHTML = list.map((ch, i) => `
-    <div class="channel-item" data-url="${ch.url}" data-name="${ch.name || 'Channel'}" data-index="${i}" tabindex="0" role="button">
+  channelList.innerHTML = list.map((ch, i) => {
+    const isActive = activeChannel?.url === ch.url;
+    return `
+    <div class="channel-item ${isActive ? 'active' : ''}" data-url="${ch.url}" data-name="${ch.name || 'Channel'}" data-index="${i}" tabindex="0" role="button">
       <img class="channel-logo" src="${ch.logo || ''}" alt="" onerror="this.style.display='none'">
       <div class="channel-info">
         <div class="channel-name">${ch.name || 'Unknown'}</div>
         <div class="channel-group">${ch.group || ''}</div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   channelList.querySelectorAll('.channel-item').forEach(item => {
     const play = () => {
@@ -155,6 +212,9 @@ function renderChannelList(list) {
 
 function showChannelToast(name) {
   channelToast.textContent = name;
+  channelToast.classList.remove('visible');
+  // Force reflow for re-triggering CSS animation
+  void channelToast.offsetWidth;
   channelToast.classList.add('visible');
   clearTimeout(channelToast._tid);
   channelToast._tid = setTimeout(() => channelToast.classList.remove('visible'), 2500);
@@ -223,25 +283,35 @@ function playChannel(url, name, el) {
     errorEl.classList.add('visible');
   };
 
-  nowPlaying.textContent = `Now playing: ${name}`;
+  nowPlaying.innerHTML = `<span style="color:#2b82e0">▸</span> Now playing: <strong>${name}</strong>`;
+}
+
+function scrollActiveChannelIntoView() {
+  requestAnimationFrame(() => {
+    const active = channelList.querySelector('.channel-item.active');
+    if (active) {
+      active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      active.focus();
+    }
+  });
 }
 
 function playPrevChannel() {
   if (filteredChannels.length === 0) return;
-  focusedChannelIndex = focusedChannelIndex <= 0 ? filteredChannels.length - 1 : focusedChannelIndex - 1;
+  const currentIdx = activeChannel ? filteredChannels.findIndex(ch => ch.url === activeChannel.url) : -1;
+  focusedChannelIndex = currentIdx <= 0 ? filteredChannels.length - 1 : currentIdx - 1;
   const ch = filteredChannels[focusedChannelIndex];
-  const el = channelList.querySelector(`[data-index="${focusedChannelIndex}"]`);
-  playChannel(ch.url, ch.name || 'Channel', el);
-  el?.focus();
+  playChannel(ch.url, ch.name || 'Channel', null);
+  scrollActiveChannelIntoView();
 }
 
 function playNextChannel() {
   if (filteredChannels.length === 0) return;
-  focusedChannelIndex = focusedChannelIndex >= filteredChannels.length - 1 ? 0 : focusedChannelIndex + 1;
+  const currentIdx = activeChannel ? filteredChannels.findIndex(ch => ch.url === activeChannel.url) : -1;
+  focusedChannelIndex = currentIdx >= filteredChannels.length - 1 ? 0 : currentIdx + 1;
   const ch = filteredChannels[focusedChannelIndex];
-  const el = channelList.querySelector(`[data-index="${focusedChannelIndex}"]`);
-  playChannel(ch.url, ch.name || 'Channel', el);
-  el?.focus();
+  playChannel(ch.url, ch.name || 'Channel', null);
+  scrollActiveChannelIntoView();
 }
 
 function setupVideoControls() {
@@ -291,6 +361,7 @@ async function loadPlaylist(id) {
     filterChannels();
     loading.classList.remove('visible');
   } catch (err) {
+    renderCategories();
     loading.classList.remove('visible');
     errorEl.textContent = 'Failed to load playlist: ' + err.message;
     errorEl.classList.add('visible');
@@ -399,8 +470,14 @@ videoContainer.addEventListener('click', () => {
   videoContainer.focus();
   showControlsTemporarily();
 });
+videoContainer.addEventListener('mousemove', () => showControlsTemporarily());
 videoContainer.addEventListener('keydown', () => showControlsTemporarily());
 
 setupVideoControls();
-renderCategories();
-loadPlaylist('south-indian');
+
+// Bootstrap: discover local playlists, then render and load default
+(async () => {
+  await discoverLocalPlaylists();
+  renderCategories();
+  loadPlaylist('south-indian');
+})();

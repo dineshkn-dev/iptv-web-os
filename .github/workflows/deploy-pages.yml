@@ -26,6 +26,16 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Generate m3u-links manifest
+        run: |
+          cd m3u-links
+          ls -1 *.m3u *.m3u8 2>/dev/null | sort | python3 -c "
+import sys, json
+files = [l.strip() for l in sys.stdin if l.strip()]
+print(json.dumps(files, indent=2))
+" > index.json
+          echo "Generated m3u-links/index.json with $(cat index.json | python3 -c 'import sys,json;print(len(json.load(sys.stdin)))') files"
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
