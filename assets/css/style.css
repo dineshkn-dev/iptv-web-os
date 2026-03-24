@@ -129,25 +129,25 @@ body::after {
   z-index: 1;
 }
 
-body.playback-focus-mode .category-panel,
-body.playback-focus-mode .sidebar,
-body.playback-focus-mode .now-playing {
-  opacity: 0.08;
-  filter: brightness(0.12) saturate(0.15) blur(1px);
-  transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1), filter 320ms cubic-bezier(0.22, 1, 0.36, 1);
+/* ---- Playback Focus Mode (Lights Out) ---- */
+.app::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body.playback-focus-mode .app::before {
+  opacity: 1;
 }
 
 body.playback-focus-mode .player-section {
-  opacity: 1;
-}
-
-body.playback-focus-mode .category-panel:focus-within,
-body.playback-focus-mode .sidebar:focus-within,
-body.playback-focus-mode .search-box:focus-within,
-body.playback-focus-mode .category-panel:hover,
-body.playback-focus-mode .sidebar:hover {
-  opacity: 1;
-  filter: none;
+  position: relative;
+  z-index: 6;
 }
 
 /* ---- Category Panel (Left Nav) ---- */
@@ -164,33 +164,6 @@ body.playback-focus-mode .sidebar:hover {
   z-index: 2;
   box-shadow: var(--shadow-md);
   position: relative;
-}
-
-.category-panel::after,
-.sidebar::after,
-.now-playing::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0);
-  transition: background 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 320ms cubic-bezier(0.22, 1, 0.36, 1);
-  pointer-events: none;
-  opacity: 0;
-}
-
-body.playback-focus-mode .category-panel::after,
-body.playback-focus-mode .sidebar::after,
-body.playback-focus-mode .now-playing::after {
-  background: rgba(0, 0, 0, 0.92);
-  opacity: 1;
-}
-
-body.playback-focus-mode .category-panel:focus-within::after,
-body.playback-focus-mode .sidebar:focus-within::after,
-body.playback-focus-mode .search-box:focus-within::after,
-body.playback-focus-mode .category-panel:hover::after,
-body.playback-focus-mode .sidebar:hover::after {
-  opacity: 0;
 }
 
 .category-panel-header {
