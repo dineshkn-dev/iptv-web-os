@@ -1,30 +1,70 @@
-# South Indian IPTV Player
+# IPTV Web Player
 
-A web-based M3U player that works on GitHub Pages.
+A static IPTV web player optimized for keyboard and TV-remote style navigation. It runs directly on GitHub Pages with no build step.
+
+## Audit Summary
+
+The repository was cleaned up into a more conventional static-site layout:
+
+- App assets moved into `assets/`
+- Playlist data moved into `data/`
+- Unused playlist manifest generation removed from the GitHub Pages workflow
+- Repository hygiene improved with a license and `.gitignore`
 
 ## Features
 
-- Browse Tamil, Telugu, Kannada, Hindi & English channels
-- Search and filter by channel name or group
-- HLS (m3u8) stream playback via hls.js
-- Dark theme, responsive layout
+- Single base playlist loaded from `data/playlist.m3u8`
+- Category-based channel browsing
+- Global channel numbering with direct numeric channel selection
+- Keyboard and remote-style navigation across categories, channel list, and player controls
+- HLS playback via `hls.js`
+- Responsive Telegram-inspired UI with fluid motion
 
-## Deploy to GitHub Pages
+## Project Structure
 
-1. Push this repo to GitHub
-2. Go to **Settings → Pages**
-3. Under "Build and deployment", set **Source** to **GitHub Actions**
-4. Push to `main` (or merge a PR) — the workflow deploys automatically
-5. Your site will be live at `https://<username>.github.io/<repo-name>/`
+```text
+.
+├── .github/
+│   └── workflows/
+│       └── deploy-pages.yml
+├── assets/
+│   ├── css/
+│   │   └── style.css
+│   └── js/
+│       └── app.js
+├── data/
+│   └── playlist.m3u8
+├── index.html
+├── LICENSE
+└── README.md
+```
 
 ## Local Development
 
-```bash
-# Using Python
-python -m http.server 8000
+Serve the repository root with any static HTTP server:
 
-# Or using npx
+```bash
+python -m http.server 8000
+```
+
+Or:
+
+```bash
 npx serve .
 ```
 
-Then open http://localhost:8000
+Open `http://localhost:8000`.
+
+## Deploy to GitHub Pages
+
+1. Push the repository to GitHub.
+2. Go to GitHub repository settings.
+3. Under Pages, set the source to GitHub Actions.
+4. Push to `main`.
+5. The workflow in `.github/workflows/deploy-pages.yml` deploys the static site.
+
+## Notes
+
+- The player expects a valid M3U playlist at `data/playlist.m3u8`.
+- Streams are third-party sources and may go offline or change without notice.
+- This repository contains a client only; there is no backend or build pipeline.

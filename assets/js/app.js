@@ -1,4 +1,4 @@
-const BASE_PLAYLIST_URL = 'm3u-links/playlist.m3u8';
+const BASE_PLAYLIST_URL = 'data/playlist.m3u8';
 
 const video = document.getElementById('video');
 const channelList = document.getElementById('channelList');
