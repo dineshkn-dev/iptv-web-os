@@ -1,51 +1,4 @@
-// Remote playlists (manually managed)
-const REMOTE_PLAYLISTS = {
-  'south-indian': { url: 'https://raw.githubusercontent.com/dineshkn-dev/mylinks/main/south_indian_playlist.m3u', label: 'South Indian', type: 'link' },
-};
-
-// All playlists (remote + auto-discovered local) — populated at startup
-const PLAYLISTS = { ...REMOTE_PLAYLISTS };
-
-// Derive a clean display label from a filename
-function labelFromFilename(filename) {
-  return filename
-    .replace(/\.m3u8?$/i, '')          // strip extension
-    .replace(/^\d+[-_.]\s*/, '')        // strip leading "1-", "4-" etc.
-    .replace(/[_]+/g, ' ')              // underscores → spaces
-    .replace(/\.(?!\s)/g, ' ')          // dots → spaces (except before space)
-    .replace(/\s{2,}/g, ' ')            // collapse whitespace
-    .trim();
-}
-
-// Derive a slug id from a filename
-function idFromFilename(filename) {
-  return 'local-' + filename
-    .replace(/\.m3u8?$/i, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-}
-
-// Fetch m3u-links/index.json and register each file as a playlist
-async function discoverLocalPlaylists() {
-  try {
-    const res = await fetch('m3u-links/index.json');
-    if (!res.ok) return;
-    const files = await res.json();
-    files.forEach(filename => {
-      const id = idFromFilename(filename);
-      if (!PLAYLISTS[id]) {
-        PLAYLISTS[id] = {
-          url: `m3u-links/${filename}`,
-          label: labelFromFilename(filename),
-          type: 'local',
-        };
-      }
-    });
-  } catch (e) {
-    console.warn('Could not load m3u-links manifest:', e);
-  }
-}
+const BASE_PLAYLIST_URL = 'm3u-links/playlist.m3u8';
 
 const video = document.getElementById('video');
 const channelList = document.getElementById('channelList');
@@ -65,7 +18,6 @@ let hls = null;
 let activeChannel = null;
 let focusedChannelIndex = -1;
 let controlsTimeout = null;
-let selectedPlaylistId = null;
 let selectedGroup = '';
 
 function parseM3U(text) {
@@ -100,61 +52,27 @@ function getUniqueGroups() {
   return Array.from(set).sort();
 }
 
-function selectCategory(type, value) {
-  if (type === 'playlist') {
-    selectedPlaylistId = value;
-    selectedGroup = '';
-    loadPlaylist(value);
-  } else if (type === 'group') {
-    selectedGroup = value;
-    filterChannels(searchInput.value, value);
-    renderCategories();
-  }
+function selectCategory(group) {
+  selectedGroup = group;
+  filterChannels(searchInput.value, group);
+  renderCategories();
 }
 
 function renderCategories() {
   const groups = getUniqueGroups();
-  const remoteIds = Object.keys(PLAYLISTS).filter(id => PLAYLISTS[id].type === 'link');
-  const localIds = Object.keys(PLAYLISTS).filter(id => PLAYLISTS[id].type === 'local');
-  let html = '';
-
-  // Remote playlists
-  if (remoteIds.length > 0) {
-    html += '<div class="category-section"><span class="category-section-title">Remote</span>';
-    remoteIds.forEach(id => {
-      const active = selectedPlaylistId === id && !selectedGroup;
-      html += `<div class="category-item ${active ? 'active' : ''}" data-type="playlist" data-value="${id}" tabindex="0" role="button">${PLAYLISTS[id].label}</div>`;
-    });
-    html += '</div>';
-  }
-
-  // Local playlists (auto-discovered)
-  if (localIds.length > 0) {
-    html += '<div class="category-section"><span class="category-section-title">Local</span>';
-    localIds.forEach(id => {
-      const active = selectedPlaylistId === id && !selectedGroup;
-      html += `<div class="category-item ${active ? 'active' : ''}" data-type="playlist" data-value="${id}" tabindex="0" role="button">${PLAYLISTS[id].label}</div>`;
-    });
-    html += '</div>';
-  }
-
-  // Channel groups (within loaded playlist)
-  if (groups.length > 0) {
-    html += '<div class="category-section"><span class="category-section-title">Groups</span>';
-    html += `<div class="category-item ${!selectedGroup ? 'active' : ''}" data-type="group" data-value="" tabindex="0" role="button">All</div>`;
-    groups.forEach(g => {
-      const active = selectedGroup === g;
-      html += `<div class="category-item ${active ? 'active' : ''}" data-type="group" data-value="${g}" tabindex="0" role="button">${g}</div>`;
-    });
-    html += '</div>';
-  }
+  let html = '<div class="category-section"><span class="category-section-title">Categories</span>';
+  html += `<div class="category-item ${!selectedGroup ? 'active' : ''}" data-value="" tabindex="0" role="button">All</div>`;
+  groups.forEach(g => {
+    const active = selectedGroup === g;
+    html += `<div class="category-item ${active ? 'active' : ''}" data-value="${g}" tabindex="0" role="button">${g}</div>`;
+  });
+  html += '</div>';
 
   categoryList.innerHTML = html;
 
   categoryList.querySelectorAll('.category-item').forEach(item => {
-    const type = item.dataset.type;
     const value = item.dataset.value;
-    const select = () => selectCategory(type, value);
+    const select = () => selectCategory(value);
     item.addEventListener('click', select);
     item.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -345,15 +263,11 @@ searchInput.addEventListener('input', () => {
   filterChannels(searchInput.value, selectedGroup);
 });
 
-async function loadPlaylist(id) {
-  const pl = PLAYLISTS[id];
-  if (!pl) return;
-  selectedPlaylistId = id;
+async function loadBasePlaylist() {
   selectedGroup = '';
   try {
     loading.classList.add('visible');
-    const fetchUrl = pl.url.startsWith('http') ? pl.url : encodeURI(pl.url);
-    const res = await fetch(fetchUrl);
+    const res = await fetch(encodeURI(BASE_PLAYLIST_URL));
     if (!res.ok) throw new Error(res.statusText);
     const text = await res.text();
     channels = parseM3U(text);
@@ -363,7 +277,7 @@ async function loadPlaylist(id) {
   } catch (err) {
     renderCategories();
     loading.classList.remove('visible');
-    errorEl.textContent = 'Failed to load playlist: ' + err.message;
+    errorEl.textContent = 'Failed to load base playlist: ' + err.message;
     errorEl.classList.add('visible');
     errorEl.style.position = 'relative';
   }
@@ -475,9 +389,7 @@ videoContainer.addEventListener('keydown', () => showControlsTemporarily());
 
 setupVideoControls();
 
-// Bootstrap: discover local playlists, then render and load default
+// Bootstrap: load the single base playlist and render categories.
 (async () => {
-  await discoverLocalPlaylists();
-  renderCategories();
-  loadPlaylist('south-indian');
+  await loadBasePlaylist();
 })();

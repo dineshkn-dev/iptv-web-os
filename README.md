@@ -1,6 +1,6 @@
 # South Indian IPTV Player
 
-A web-based M3U player for South Indian channels. Works on GitHub Pages.
+A web-based M3U player that works on GitHub Pages.
 
 ## Features
 
@@ -28,7 +28,3 @@ npx serve .
 ```
 
 Then open http://localhost:8000
-
-## Playlist
-
-Uses: [South Indian Playlist](https://raw.githubusercontent.com/dineshkn-dev/mylinks/main/south_indian_playlist.m3u)
