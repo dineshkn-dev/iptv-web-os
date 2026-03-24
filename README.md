@@ -31,7 +31,14 @@ The repository was cleaned up into a more conventional static-site layout:
 │   ├── css/
 │   │   └── style.css
 │   └── js/
-│       └── app.js
+│       ├── app.js
+│       └── modules/
+│           ├── focus-mode.js
+│           ├── navigation.js
+│           ├── player.js
+│           ├── playlist.js
+│           ├── render.js
+│           └── state.js
 ├── data/
 │   └── playlist.m3u8
 ├── index.html

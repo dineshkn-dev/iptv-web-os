@@ -1,25 +1,25 @@
 /* ============================================
-   IPTV Player — Telegram-inspired UI
-   ============================================ */
+  IPTV Player — Proton-inspired UI
+  ============================================ */
 
 :root {
-  --bg-primary: #17212b;
-  --bg-secondary: #1e2c3a;
-  --bg-tertiary: #242f3d;
-  --bg-glass: rgba(30, 44, 58, 0.72);
-  --bg-glass-strong: rgba(36, 47, 61, 0.9);
-  --bg-hover: #2b3945;
-  --bg-active: rgba(43, 130, 224, 0.15);
-  --accent: #2b82e0;
-  --accent-light: #3a9aef;
-  --accent-soft: #7fc0ff;
-  --accent-glow: rgba(43, 130, 224, 0.25);
-  --accent-subtle: rgba(43, 130, 224, 0.08);
-  --text-primary: #f5f5f5;
-  --text-secondary: #8696a8;
-  --text-tertiary: #6a7d90;
-  --border: rgba(255, 255, 255, 0.06);
-  --border-light: rgba(255, 255, 255, 0.1);
+  --bg-primary: #06030b;
+  --bg-secondary: #0d0914;
+  --bg-tertiary: #171124;
+  --bg-glass: rgba(12, 8, 20, 0.78);
+  --bg-glass-strong: rgba(18, 12, 28, 0.92);
+  --bg-hover: #1d1630;
+  --bg-active: rgba(139, 92, 246, 0.18);
+  --accent: #8b5cf6;
+  --accent-light: #b18cff;
+  --accent-soft: #d9c3ff;
+  --accent-glow: rgba(139, 92, 246, 0.34);
+  --accent-subtle: rgba(139, 92, 246, 0.12);
+  --text-primary: #f7f3ff;
+  --text-secondary: #a79abf;
+  --text-tertiary: #6f6485;
+  --border: rgba(255, 255, 255, 0.05);
+  --border-light: rgba(255, 255, 255, 0.09);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.35);
@@ -47,9 +47,9 @@ html {
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background:
-    radial-gradient(1000px 560px at -10% -20%, rgba(46, 126, 206, 0.28), transparent 65%),
-    radial-gradient(700px 500px at 110% 10%, rgba(83, 165, 234, 0.15), transparent 70%),
-    linear-gradient(145deg, #111a23 0%, #17212b 42%, #101921 100%);
+    radial-gradient(1000px 560px at -10% -20%, rgba(146, 96, 255, 0.22), transparent 62%),
+    radial-gradient(720px 520px at 110% 10%, rgba(90, 40, 160, 0.18), transparent 68%),
+    linear-gradient(145deg, #030106 0%, #09050f 42%, #020103 100%);
   color: var(--text-primary);
   min-height: 100vh;
   overflow: hidden;
@@ -72,7 +72,7 @@ body::before {
   left: -120px;
   top: -120px;
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 40%, rgba(61, 148, 222, 0.28), rgba(61, 148, 222, 0));
+  background: radial-gradient(circle at 40% 40%, rgba(143, 92, 246, 0.34), rgba(143, 92, 246, 0));
   animation: floatBlobA 18s ease-in-out infinite;
 }
 
@@ -82,7 +82,7 @@ body::after {
   right: -160px;
   bottom: -160px;
   border-radius: 50%;
-  background: radial-gradient(circle at 55% 55%, rgba(122, 192, 255, 0.14), rgba(122, 192, 255, 0));
+  background: radial-gradient(circle at 55% 55%, rgba(193, 150, 255, 0.12), rgba(193, 150, 255, 0));
   animation: floatBlobB 22s ease-in-out infinite;
 }
 
@@ -129,6 +129,27 @@ body::after {
   z-index: 1;
 }
 
+body.playback-focus-mode .category-panel,
+body.playback-focus-mode .sidebar,
+body.playback-focus-mode .now-playing {
+  opacity: 0.08;
+  filter: brightness(0.12) saturate(0.15) blur(1px);
+  transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1), filter 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body.playback-focus-mode .player-section {
+  opacity: 1;
+}
+
+body.playback-focus-mode .category-panel:focus-within,
+body.playback-focus-mode .sidebar:focus-within,
+body.playback-focus-mode .search-box:focus-within,
+body.playback-focus-mode .category-panel:hover,
+body.playback-focus-mode .sidebar:hover {
+  opacity: 1;
+  filter: none;
+}
+
 /* ---- Category Panel (Left Nav) ---- */
 .category-panel {
   width: 220px;
@@ -142,6 +163,34 @@ body::after {
   overflow: hidden;
   z-index: 2;
   box-shadow: var(--shadow-md);
+  position: relative;
+}
+
+.category-panel::after,
+.sidebar::after,
+.now-playing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  transition: background 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  opacity: 0;
+}
+
+body.playback-focus-mode .category-panel::after,
+body.playback-focus-mode .sidebar::after,
+body.playback-focus-mode .now-playing::after {
+  background: rgba(0, 0, 0, 0.92);
+  opacity: 1;
+}
+
+body.playback-focus-mode .category-panel:focus-within::after,
+body.playback-focus-mode .sidebar:focus-within::after,
+body.playback-focus-mode .search-box:focus-within::after,
+body.playback-focus-mode .category-panel:hover::after,
+body.playback-focus-mode .sidebar:hover::after {
+  opacity: 0;
 }
 
 .category-panel-header {
@@ -234,7 +283,7 @@ body::after {
 .category-item.active {
   background: var(--bg-active);
   color: var(--accent-light);
-  box-shadow: inset 0 0 0 1px rgba(72, 156, 228, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(177, 140, 255, 0.28);
 }
 
 .category-item.active::before {
@@ -257,6 +306,7 @@ body::after {
   flex-direction: column;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
+  position: relative;
 }
 
 /* ---- Search Box ---- */
@@ -342,8 +392,8 @@ body::after {
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--accent-soft);
-  background: rgba(67, 145, 221, 0.1);
-  border: 1px solid rgba(67, 145, 221, 0.26);
+  background: rgba(139, 92, 246, 0.14);
+  border: 1px solid rgba(139, 92, 246, 0.34);
   flex-shrink: 0;
 }
 
@@ -367,13 +417,13 @@ body::after {
 
 .channel-item.active {
   background: var(--bg-active);
-  box-shadow: inset 0 0 0 1px rgba(72, 156, 228, 0.24);
+  box-shadow: inset 0 0 0 1px rgba(177, 140, 255, 0.24);
 }
 
 .channel-item.active .channel-number {
-  color: #d7ecff;
-  background: rgba(67, 145, 221, 0.24);
-  border-color: rgba(127, 192, 255, 0.45);
+  color: #f0e5ff;
+  background: rgba(139, 92, 246, 0.28);
+  border-color: rgba(217, 195, 255, 0.5);
 }
 
 .channel-item.active::after {
@@ -445,8 +495,8 @@ body::after {
   flex: 1;
   position: relative;
   background:
-    radial-gradient(1200px 620px at 10% 0%, rgba(67, 145, 221, 0.22), transparent 58%),
-    linear-gradient(180deg, rgba(12, 18, 24, 0.98), rgba(5, 8, 12, 1));
+    radial-gradient(1200px 620px at 10% 0%, rgba(139, 92, 246, 0.22), transparent 58%),
+    linear-gradient(180deg, rgba(8, 4, 14, 0.98), rgba(2, 1, 5, 1));
   border-radius: var(--radius-lg);
   overflow: hidden;
   min-height: 300px;
@@ -496,8 +546,8 @@ body::after {
   background: rgba(7, 14, 24, 0.82);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(112, 185, 247, 0.42);
-  color: #dff2ff;
+  border: 1px solid rgba(177, 140, 255, 0.42);
+  color: #f0e5ff;
   font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -610,8 +660,8 @@ body::after {
   justify-content: center;
   gap: 12px;
   background:
-    radial-gradient(60% 60% at 50% 30%, rgba(67, 145, 221, 0.16), transparent 72%),
-    linear-gradient(135deg, #121b24 0%, #0f1820 100%);
+    radial-gradient(60% 60% at 50% 30%, rgba(139, 92, 246, 0.18), transparent 72%),
+    linear-gradient(135deg, #0e0917 0%, #06030b 100%);
   color: var(--text-secondary);
 }
 
@@ -626,7 +676,7 @@ body::after {
   margin-bottom: 8px;
   color: var(--accent);
   animation: breathe 3s ease-in-out infinite;
-  box-shadow: inset 0 0 0 1px rgba(122, 192, 255, 0.18), 0 10px 26px rgba(25, 81, 130, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(217, 195, 255, 0.2), 0 10px 26px rgba(79, 42, 138, 0.28);
 }
 
 @keyframes breathe {
@@ -731,6 +781,7 @@ body::after {
   opacity: 0;
   transform: translateY(8px);
   transition: opacity var(--transition-smooth), transform var(--transition-smooth);
+  position: relative;
 }
 
 .now-playing:not(:empty) {
