@@ -2,7 +2,11 @@ export function createFocusMode({ elements }) {
   let uiDimTimeout = null;
 
   function isWindowedPlaybackActive() {
-    return elements.video.classList.contains('playing') && !elements.video.paused && !document.fullscreenElement;
+    return (
+      elements.video.classList.contains('playing') &&
+      !elements.video.paused &&
+      !document.fullscreenElement
+    );
   }
 
   function setUiDimmed(dimmed) {

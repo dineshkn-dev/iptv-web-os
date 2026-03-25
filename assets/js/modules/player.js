@@ -79,7 +79,9 @@ export function createPlayerController({
       state.focusedChannelIndex = parseInt(el.dataset.index, 10);
     }
 
-    channelList.querySelectorAll('.channel-item').forEach(item => item.classList.remove('active'));
+    channelList
+      .querySelectorAll('.channel-item')
+      .forEach((item) => item.classList.remove('active'));
     if (el) el.classList.add('active');
 
     showChannelToast(name);
@@ -118,15 +120,16 @@ export function createPlayerController({
       handlePlaybackFailure('Failed to load stream. Channel may be offline.');
     };
 
-    nowPlaying.innerHTML = `<span style="color:var(--accent-soft)">▸</span> Now playing: <strong>${name}</strong>`;
+    nowPlaying.textContent = `Now playing: ${name}`;
   }
 
   function playPrevChannel() {
     if (state.filteredChannels.length === 0) return;
     const currentIdx = state.activeChannel
-      ? state.filteredChannels.findIndex(channel => channel.url === state.activeChannel.url)
+      ? state.filteredChannels.findIndex((channel) => channel.url === state.activeChannel.url)
       : -1;
-    state.focusedChannelIndex = currentIdx <= 0 ? state.filteredChannels.length - 1 : currentIdx - 1;
+    state.focusedChannelIndex =
+      currentIdx <= 0 ? state.filteredChannels.length - 1 : currentIdx - 1;
     const channel = state.filteredChannels[state.focusedChannelIndex];
     const item = focusChannelByIndex(state.focusedChannelIndex);
     playChannel(channel.url, channel.name || 'Channel', item);
@@ -135,9 +138,10 @@ export function createPlayerController({
   function playNextChannel() {
     if (state.filteredChannels.length === 0) return;
     const currentIdx = state.activeChannel
-      ? state.filteredChannels.findIndex(channel => channel.url === state.activeChannel.url)
+      ? state.filteredChannels.findIndex((channel) => channel.url === state.activeChannel.url)
       : -1;
-    state.focusedChannelIndex = currentIdx >= state.filteredChannels.length - 1 ? 0 : currentIdx + 1;
+    state.focusedChannelIndex =
+      currentIdx >= state.filteredChannels.length - 1 ? 0 : currentIdx + 1;
     const channel = state.filteredChannels[state.focusedChannelIndex];
     const item = focusChannelByIndex(state.focusedChannelIndex);
     playChannel(channel.url, channel.name || 'Channel', item);

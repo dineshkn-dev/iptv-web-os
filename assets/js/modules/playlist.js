@@ -1,7 +1,9 @@
 export const BASE_PLAYLIST_URL = 'data/playlist.m3u8';
 
 export function parseM3U(text) {
-  const lines = text.split('\n');
+  const lines = String(text)
+    .replace(/^\uFEFF/, '')
+    .split(/\r?\n/);
   const result = [];
   let current = null;
 
@@ -27,7 +29,7 @@ export function parseM3U(text) {
 
 export function getUniqueGroups(channels) {
   const set = new Set();
-  channels.forEach(channel => {
+  channels.forEach((channel) => {
     if (channel.group) set.add(channel.group);
   });
   return Array.from(set).sort();

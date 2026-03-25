@@ -1,5 +1,18 @@
 import { getUniqueGroups } from './playlist.js';
 
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeAttr(value = '') {
+  return escapeHtml(value).replace(/`/g, '&#96;');
+}
+
 function animateListSwap(listEl, callback) {
   listEl.classList.add('is-updating');
   callback();
@@ -49,12 +62,13 @@ export function createRenderer({ state, elements, onPlayChannel }) {
 
   function renderCategories() {
     const groups = getUniqueGroups(state.channels);
-    let html = '<div class="category-section"><span class="category-section-title">Categories</span>';
+    let html =
+      '<div class="category-section"><span class="category-section-title">Categories</span>';
     html += `<div class="category-item ${!state.selectedGroup ? 'active' : ''}" data-index="0" data-value="" tabindex="0" role="button">All</div>`;
     groups.forEach((group, index) => {
       const active = state.selectedGroup === group;
       const idx = index + 1;
-      html += `<div class="category-item ${active ? 'active' : ''}" data-index="${idx}" data-value="${group}" tabindex="0" role="button">${group}</div>`;
+      html += `<div class="category-item ${active ? 'active' : ''}" data-index="${idx}" data-value="${escapeAttr(group)}" tabindex="0" role="button">${escapeHtml(group)}</div>`;
     });
     html += '</div>';
 
@@ -63,7 +77,7 @@ export function createRenderer({ state, elements, onPlayChannel }) {
     });
     applyStagger(categoryList, '.category-item', 14);
 
-    categoryList.querySelectorAll('.category-item').forEach(item => {
+    categoryList.querySelectorAll('.category-item').forEach((item) => {
       const value = item.dataset.value;
       const idx = parseInt(item.dataset.index || '0', 10);
       const select = () => {
@@ -74,7 +88,7 @@ export function createRenderer({ state, elements, onPlayChannel }) {
       item.addEventListener('focus', () => {
         state.focusedCategoryIndex = idx;
       });
-      item.addEventListener('keydown', event => {
+      item.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           select();
@@ -84,30 +98,35 @@ export function createRenderer({ state, elements, onPlayChannel }) {
   }
 
   function filterChannels(search = '', group = '') {
-    const prevFocusedChannel = state.focusedChannelIndex >= 0 ? state.filteredChannels[state.focusedChannelIndex] : null;
+    const prevFocusedChannel =
+      state.focusedChannelIndex >= 0 ? state.filteredChannels[state.focusedChannelIndex] : null;
     let filtered = state.channels;
 
     if (search) {
       const query = search.toLowerCase();
-      filtered = filtered.filter(channel =>
-        channel.name?.toLowerCase().includes(query) || channel.group?.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        (channel) =>
+          channel.name?.toLowerCase().includes(query) ||
+          channel.group?.toLowerCase().includes(query)
       );
     }
 
     if (group) {
-      filtered = filtered.filter(channel => channel.group === group);
+      filtered = filtered.filter((channel) => channel.group === group);
     }
 
     state.filteredChannels = filtered;
 
     const activeIdx = state.activeChannel
-      ? state.filteredChannels.findIndex(channel => channel.url === state.activeChannel.url)
+      ? state.filteredChannels.findIndex((channel) => channel.url === state.activeChannel.url)
       : -1;
 
     if (activeIdx >= 0) {
       state.focusedChannelIndex = activeIdx;
     } else if (prevFocusedChannel) {
-      const prevIdx = state.filteredChannels.findIndex(channel => channel.url === prevFocusedChannel.url);
+      const prevIdx = state.filteredChannels.findIndex(
+        (channel) => channel.url === prevFocusedChannel.url
+      );
       state.focusedChannelIndex = prevIdx >= 0 ? prevIdx : -1;
     } else {
       state.focusedChannelIndex = -1;
@@ -118,30 +137,36 @@ export function createRenderer({ state, elements, onPlayChannel }) {
 
   function renderChannelList(list) {
     animateListSwap(channelList, () => {
-      channelList.innerHTML = list.map((channel, index) => {
-        const isActive = state.activeChannel?.url === channel.url;
-        const channelNumber = channel.number || index + 1;
-        return `
-    <div class="channel-item ${isActive ? 'active' : ''}" data-url="${channel.url}" data-name="${channel.name || 'Channel'}" data-index="${index}" tabindex="0" role="button">
+      channelList.innerHTML = list
+        .map((channel, index) => {
+          const isActive = state.activeChannel?.url === channel.url;
+          const channelNumber = channel.number || index + 1;
+          const channelUrl = channel.url || '';
+          const channelName = channel.name || 'Channel';
+          const channelGroup = channel.group || '';
+          const channelLogo = channel.logo || '';
+          return `
+    <div class="channel-item ${isActive ? 'active' : ''}" data-url="${escapeAttr(channelUrl)}" data-name="${escapeAttr(channelName)}" data-index="${index}" tabindex="0" role="button">
       <div class="channel-number">${channelNumber}</div>
-      <img class="channel-logo" src="${channel.logo || ''}" alt="" onerror="this.style.display='none'">
+      <img class="channel-logo" src="${escapeAttr(channelLogo)}" alt="" onerror="this.style.display='none'">
       <div class="channel-info">
-        <div class="channel-name">${channel.name || 'Unknown'}</div>
-        <div class="channel-group">${channel.group || ''}</div>
+        <div class="channel-name">${escapeHtml(channelName || 'Unknown')}</div>
+        <div class="channel-group">${escapeHtml(channelGroup)}</div>
       </div>
     </div>
   `;
-      }).join('');
+        })
+        .join('');
     });
     applyStagger(channelList, '.channel-item', 22);
 
-    channelList.querySelectorAll('.channel-item').forEach(item => {
+    channelList.querySelectorAll('.channel-item').forEach((item) => {
       const play = () => {
         state.focusedChannelIndex = parseInt(item.dataset.index, 10);
         onPlayChannel(item.dataset.url, item.dataset.name, item);
       };
       item.addEventListener('click', play);
-      item.addEventListener('keydown', event => {
+      item.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           play();
@@ -164,7 +189,10 @@ export function createRenderer({ state, elements, onPlayChannel }) {
   function ensureChannelVisible(channel) {
     const matchesCurrentGroup = !state.selectedGroup || channel.group === state.selectedGroup;
     const query = (searchInput.value || '').trim().toLowerCase();
-    const matchesCurrentSearch = !query || channel.name?.toLowerCase().includes(query) || channel.group?.toLowerCase().includes(query);
+    const matchesCurrentSearch =
+      !query ||
+      channel.name?.toLowerCase().includes(query) ||
+      channel.group?.toLowerCase().includes(query);
 
     if (!matchesCurrentGroup) state.selectedGroup = '';
     if (!matchesCurrentSearch) searchInput.value = '';

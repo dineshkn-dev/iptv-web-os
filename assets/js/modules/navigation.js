@@ -29,7 +29,7 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
       return false;
     }
 
-    const channel = state.channels.find(item => item.number === number);
+    const channel = state.channels.find((item) => item.number === number);
     if (!channel) {
       showNumberZap(`${number}`, true);
       clearTimeout(state.numberBufferTimer);
@@ -38,7 +38,7 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
     }
 
     renderer.ensureChannelVisible(channel);
-    const index = state.filteredChannels.findIndex(item => item.url === channel.url);
+    const index = state.filteredChannels.findIndex((item) => item.url === channel.url);
     if (index < 0) {
       showNumberZap(`${number}`, true);
       clearTimeout(state.numberBufferTimer);
@@ -66,7 +66,7 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
     }, 1400);
   }
 
-  document.addEventListener('keydown', event => {
+  document.addEventListener('keydown', (event) => {
     const inChannelList = channelList.contains(document.activeElement);
     const inCategoryList = categoryList.contains(document.activeElement);
     const inControls = videoControls.contains(document.activeElement);
@@ -87,7 +87,9 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
     const controlButtons = Array.from(videoControls.querySelectorAll('.ctrl-btn'));
     const preferredControl = controlButtons[1] || controlButtons[0] || null;
     const currentChannel = inChannelList ? document.activeElement.closest('.channel-item') : null;
-    const currentCategory = inCategoryList ? document.activeElement.closest('.category-item') : null;
+    const currentCategory = inCategoryList
+      ? document.activeElement.closest('.category-item')
+      : null;
     const currentControl = inControls ? document.activeElement.closest('.ctrl-btn') : null;
     const channelIdx = currentChannel ? parseInt(currentChannel.dataset.index, 10) : -1;
     const categoryIdx = currentCategory ? Array.from(categoryItems).indexOf(currentCategory) : -1;
@@ -110,7 +112,12 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
         } else if (!inChannelList && !inCategoryList && !inControls && channelItems.length > 0) {
           const target = state.focusedChannelIndex > 0 ? state.focusedChannelIndex - 1 : 0;
           renderer.focusChannelByIndex(target);
-        } else if (video.classList.contains('playing') && !inChannelList && !inCategoryList && !inControls) {
+        } else if (
+          video.classList.contains('playing') &&
+          !inChannelList &&
+          !inCategoryList &&
+          !inControls
+        ) {
           player.playPrevChannel();
           player.showControlsTemporarily();
         }
@@ -124,11 +131,17 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
         } else if (onVideoContainer && preferredControl) {
           preferredControl.focus();
         } else if (!inChannelList && !inCategoryList && !inControls && channelItems.length > 0) {
-          const target = state.focusedChannelIndex >= 0 && state.focusedChannelIndex < channelItems.length - 1
-            ? state.focusedChannelIndex + 1
-            : 0;
+          const target =
+            state.focusedChannelIndex >= 0 && state.focusedChannelIndex < channelItems.length - 1
+              ? state.focusedChannelIndex + 1
+              : 0;
           renderer.focusChannelByIndex(target);
-        } else if (video.classList.contains('playing') && !inChannelList && !inCategoryList && !inControls) {
+        } else if (
+          video.classList.contains('playing') &&
+          !inChannelList &&
+          !inCategoryList &&
+          !inControls
+        ) {
           player.playNextChannel();
           player.showControlsTemporarily();
         }
@@ -199,7 +212,11 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
           player.showControlsTemporarily();
         } else if (currentChannel) {
           event.preventDefault();
-          player.playChannel(currentChannel.dataset.url, currentChannel.dataset.name, currentChannel);
+          player.playChannel(
+            currentChannel.dataset.url,
+            currentChannel.dataset.name,
+            currentChannel
+          );
         } else if (channelItems.length > 0) {
           event.preventDefault();
           const idx = state.focusedChannelIndex >= 0 ? state.focusedChannelIndex : 0;
@@ -242,13 +259,20 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
         break;
     }
 
-    if (video.classList.contains('playing') && ['ArrowUp', 'ArrowDown', 'ChannelUp', 'ChannelDown', ' '].includes(event.key)) {
+    if (
+      video.classList.contains('playing') &&
+      ['ArrowUp', 'ArrowDown', 'ChannelUp', 'ChannelDown', ' '].includes(event.key)
+    ) {
       player.showControlsTemporarily();
     }
   });
 
-  document.addEventListener('focusin', event => {
-    if (categoryList.contains(event.target) || channelList.contains(event.target) || event.target === searchInput) {
+  document.addEventListener('focusin', (event) => {
+    if (
+      categoryList.contains(event.target) ||
+      channelList.contains(event.target) ||
+      event.target === searchInput
+    ) {
       wakeUiFromNavigation();
     }
   });

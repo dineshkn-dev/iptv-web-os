@@ -80,4 +80,3 @@ async function init() {
 }
 
 init();
-      const nameMatch = line.match(/,(.+)$/);

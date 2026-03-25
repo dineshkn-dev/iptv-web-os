@@ -10,6 +10,7 @@ The repository was cleaned up into a more conventional static-site layout:
 - Playlist data moved into `data/`
 - Unused playlist manifest generation removed from the GitHub Pages workflow
 - Repository hygiene improved with a license and `.gitignore`
+- Quality guardrails added with ESLint, Prettier, and Vitest
 
 ## Features
 
@@ -27,6 +28,8 @@ The repository was cleaned up into a more conventional static-site layout:
 ├── .github/
 │   └── workflows/
 │       └── deploy-pages.yml
+├── eslint.config.js
+├── .prettierrc.json
 ├── assets/
 │   ├── css/
 │   │   └── style.css
@@ -43,7 +46,36 @@ The repository was cleaned up into a more conventional static-site layout:
 │   └── playlist.m3u8
 ├── index.html
 ├── LICENSE
+├── package.json
+├── tests/
+│   └── playlist.test.js
 └── README.md
+```
+
+## Quality Tooling
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run lint checks:
+
+```bash
+npm run lint
+```
+
+Run formatter check:
+
+```bash
+npm run format:check
+```
+
+Run tests:
+
+```bash
+npm test
 ```
 
 ## Local Development
