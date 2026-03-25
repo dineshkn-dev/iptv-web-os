@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e0d3a"/>
+      <stop offset="100%" stop-color="#0a0518"/>
+    </linearGradient>
+    <linearGradient id="hgrad" x1="0%" y1="0%" x2="60%" y2="100%">
+      <stop offset="0%" stop-color="#d4b0ff"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="bolt" x1="0%" y1="0%" x2="40%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#c4a0ff" stop-opacity="0.8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="32" height="32" rx="7" ry="7" fill="url(#bg)"/>
+
+  <!-- Subtle inner glow -->
+  <rect width="32" height="32" rx="7" ry="7" fill="#8b5cf6" opacity="0.08"/>
+
+  <!-- H left vertical bar -->
+  <rect x="5" y="7" width="5" height="18" rx="1.5" fill="url(#hgrad)"/>
+
+  <!-- H right vertical bar -->
+  <rect x="22" y="7" width="5" height="18" rx="1.5" fill="url(#hgrad)"/>
+
+  <!-- H crossbar -->
+  <rect x="5" y="13.5" width="22" height="5" rx="1.5" fill="url(#hgrad)"/>
+
+  <!-- Lightning bolt overlay (speed / hyper symbol) -->
+  <polygon points="19,7 14,16.5 17.5,16.5 13,25 21,14 17,14" fill="url(#bolt)" opacity="0.92"/>
+</svg>

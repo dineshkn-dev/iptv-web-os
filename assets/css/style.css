@@ -1,5 +1,5 @@
 /* ============================================
-  IPTV Player — Proton-inspired UI
+  Hyper TV — Proton-inspired UI
   ============================================ */
 
 :root {
@@ -177,6 +177,13 @@ body::after {
 
 .category-panel-header svg {
   color: var(--accent);
+  flex-shrink: 0;
+}
+
+.brand-mark {
+  display: block;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
 }
 

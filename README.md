@@ -1,6 +1,10 @@
-# IPTV Web Player
+<p align="center">
+	<img src="assets/favicon.svg" alt="Hyper TV logo" width="96" height="96" />
+</p>
 
-A static IPTV web player optimized for keyboard and TV-remote style navigation. It runs directly on GitHub Pages with no build step.
+# Hyper TV
+
+Hyper TV is a static web TV player optimized for keyboard and TV-remote style navigation. It runs directly in the browser with no build step.
 
 ## Audit Summary
 
@@ -19,7 +23,7 @@ The repository was cleaned up into a more conventional static-site layout:
 - Global channel numbering with direct numeric channel selection
 - Keyboard and remote-style navigation across categories, channel list, and player controls
 - HLS playback via `hls.js`
-- Responsive Telegram-inspired UI with fluid motion
+- Responsive TV-first UI with fluid motion
 
 ## Project Structure
 
@@ -36,7 +40,6 @@ The repository was cleaned up into a more conventional static-site layout:
 │   └── js/
 │       ├── app.js
 │       └── modules/
-│           ├── focus-mode.js
 │           ├── navigation.js
 │           ├── player.js
 │           ├── playlist.js

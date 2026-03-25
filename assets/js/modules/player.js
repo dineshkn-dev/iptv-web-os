@@ -27,7 +27,7 @@ export function createPlayerController({ state, elements, focusChannelByIndex })
       <div class="error-title">Playback Error</div>
       <div class="error-message">${safeMessage}</div>
       <div class="error-meta">Channel: ${safeChannel}</div>
-      <div class="error-hint">Try another channel. Some IPTV streams are temporarily unavailable.</div>
+      <div class="error-hint">Try another channel. Some streams are temporarily unavailable.</div>
     `;
   }
 
