@@ -41,6 +41,12 @@ export function createPlayerController({ state, elements, focusChannelByIndex })
   }
 
   function toggleFullscreen() {
+    videoContainer.classList.add('is-fs-transitioning');
+    document.addEventListener(
+      'fullscreenchange',
+      () => videoContainer.classList.remove('is-fs-transitioning'),
+      { once: true }
+    );
     if (!document.fullscreenElement) {
       videoContainer.requestFullscreen?.();
     } else {

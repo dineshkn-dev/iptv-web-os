@@ -1,4 +1,4 @@
-import { getUniqueGroups } from './playlist.js';
+import { getUniqueGroups, getGroupCounts } from './playlist.js';
 
 function escapeHtml(value = '') {
   return String(value)
@@ -113,13 +113,16 @@ export function createRenderer({ state, elements, onPlayChannel }) {
 
   function renderCategories() {
     const groups = getUniqueGroups(state.channels);
+    const counts = getGroupCounts(state.channels);
+    const totalCount = state.channels.length;
     let html =
       '<div class="category-section"><span class="category-section-title">Categories</span>';
-    html += `<div class="category-item ${!state.selectedGroup ? 'active' : ''}" data-index="0" data-value="" tabindex="0" role="button">All</div>`;
+    html += `<div class="category-item ${!state.selectedGroup ? 'active' : ''}" data-index="0" data-value="" tabindex="0" role="button">All<span class="category-count">${totalCount}</span></div>`;
     groups.forEach((group, index) => {
       const active = state.selectedGroup === group;
       const idx = index + 1;
-      html += `<div class="category-item ${active ? 'active' : ''}" data-index="${idx}" data-value="${escapeAttr(group)}" tabindex="0" role="button">${escapeHtml(group)}</div>`;
+      const count = counts[group] || 0;
+      html += `<div class="category-item ${active ? 'active' : ''}" data-index="${idx}" data-value="${escapeAttr(group)}" tabindex="0" role="button">${escapeHtml(group)}<span class="category-count">${count}</span></div>`;
     });
     html += '</div>';
 

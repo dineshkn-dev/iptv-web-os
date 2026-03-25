@@ -136,6 +136,14 @@ export function getUniqueGroups(channels) {
   return Array.from(set).sort();
 }
 
+export function getGroupCounts(channels) {
+  const counts = {};
+  channels.forEach((channel) => {
+    if (channel.group) counts[channel.group] = (counts[channel.group] || 0) + 1;
+  });
+  return counts;
+}
+
 export async function fetchBasePlaylist(url = BASE_PLAYLIST_URL) {
   const res = await fetch(encodeURI(url));
   if (!res.ok) throw new Error(res.statusText);
