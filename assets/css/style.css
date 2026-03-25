@@ -208,7 +208,10 @@ body::after {
   font-weight: 500;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast);
   color: var(--text-secondary);
   position: relative;
   overflow: hidden;
@@ -335,7 +338,9 @@ body::after {
   font-family: inherit;
   font-size: 0.875rem;
   transition:
-    all var(--transition-smooth),
+    border-color var(--transition-smooth),
+    background-color var(--transition-smooth),
+    box-shadow var(--transition-smooth),
     transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -384,7 +389,8 @@ body::after {
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition:
-    all var(--transition-fast),
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
     transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
   margin-bottom: 2px;
   position: relative;
@@ -949,9 +955,13 @@ body.perf-lite .search-box input {
 body.perf-lite .channel-item:hover,
 body.perf-lite .ctrl-btn:hover,
 body.perf-lite .ctrl-btn:focus,
-body.perf-lite .search-box input:focus,
+body.perf-lite .search-box input:focus {
+  transform: none;
+}
+
 body.perf-lite .channel-item:hover .channel-logo {
   transform: none;
+  box-shadow: none;
 }
 
 body.perf-lite .placeholder-icon {

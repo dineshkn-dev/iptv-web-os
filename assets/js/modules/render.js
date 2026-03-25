@@ -56,6 +56,9 @@ export function createRenderer({ state, elements, onPlayChannel }) {
   let virtualItemHeightMeasured = false;
   let scrollRaf = 0;
   let delegatedEventsBound = false;
+  let groupsCache = null;
+  let countsCache = null;
+  let channelsCacheRef = null;
 
   function focusWithoutScroll(element) {
     if (!element) return;
@@ -83,10 +86,25 @@ export function createRenderer({ state, elements, onPlayChannel }) {
     return true;
   }
 
+  function getOrComputeGroupData() {
+    if (state.channels !== channelsCacheRef) {
+      channelsCacheRef = state.channels;
+      groupsCache = getUniqueGroups(state.channels);
+      countsCache = getGroupCounts(state.channels);
+    }
+    return { groups: groupsCache, counts: countsCache };
+  }
+
+  function updateActiveCategoryUI(value) {
+    categoryList.querySelectorAll('.category-item').forEach((item) => {
+      item.classList.toggle('active', item.dataset.value === value);
+    });
+  }
+
   function selectCategory(group) {
     state.selectedGroup = group;
     filterChannels(searchInput.value, group);
-    renderCategories();
+    updateActiveCategoryUI(group);
   }
 
   function focusCategoryByIndex(index) {
@@ -112,8 +130,7 @@ export function createRenderer({ state, elements, onPlayChannel }) {
   }
 
   function renderCategories() {
-    const groups = getUniqueGroups(state.channels);
-    const counts = getGroupCounts(state.channels);
+    const { groups, counts } = getOrComputeGroupData();
     const totalCount = state.channels.length;
     let html =
       '<div class="category-section"><span class="category-section-title">Categories</span>';
@@ -129,7 +146,9 @@ export function createRenderer({ state, elements, onPlayChannel }) {
     animateListSwap(categoryList, () => {
       categoryList.innerHTML = html;
     });
-    applyStagger(categoryList, '.category-item', 14);
+    if (!document.body.classList.contains('perf-lite')) {
+      applyStagger(categoryList, '.category-item', 14);
+    }
 
     categoryList.querySelectorAll('.category-item').forEach((item) => {
       const value = item.dataset.value;
