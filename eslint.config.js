@@ -11,6 +11,7 @@ export default [
         clearTimeout: 'readonly',
         document: 'readonly',
         fetch: 'readonly',
+        navigator: 'readonly',
         requestAnimationFrame: 'readonly',
         setTimeout: 'readonly',
         window: 'readonly',

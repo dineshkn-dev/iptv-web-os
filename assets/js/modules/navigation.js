@@ -1,4 +1,4 @@
-export function setupNavigation({ state, elements, renderer, player, wakeUiFromNavigation }) {
+export function setupNavigation({ state, elements, renderer, player }) {
   const {
     video,
     channelList,
@@ -82,10 +82,10 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
       return;
     }
 
-    const channelItems = channelList.querySelectorAll('.channel-item');
+    const channelCount = state.filteredChannels.length;
     const categoryItems = categoryList.querySelectorAll('.category-item');
     const controlButtons = Array.from(videoControls.querySelectorAll('.ctrl-btn'));
-    const preferredControl = controlButtons[1] || controlButtons[0] || null;
+    const preferredControl = controlButtons[0] || null;
     const currentChannel = inChannelList ? document.activeElement.closest('.channel-item') : null;
     const currentCategory = inCategoryList
       ? document.activeElement.closest('.category-item')
@@ -95,10 +95,6 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
     const categoryIdx = currentCategory ? Array.from(categoryItems).indexOf(currentCategory) : -1;
     const controlIdx = currentControl ? controlButtons.indexOf(currentControl) : -1;
 
-    if (inChannelList || inCategoryList) {
-      wakeUiFromNavigation();
-    }
-
     switch (event.key) {
       case 'ArrowUp':
         event.preventDefault();
@@ -106,10 +102,10 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
           renderer.focusChannelByIndex(channelIdx - 1);
         } else if (inCategoryList && categoryIdx > 0) {
           renderer.focusCategoryByIndex(categoryIdx - 1);
-        } else if (inControls && channelItems.length > 0) {
+        } else if (inControls && channelCount > 0) {
           const target = state.focusedChannelIndex >= 0 ? state.focusedChannelIndex : 0;
           renderer.focusChannelByIndex(target);
-        } else if (!inChannelList && !inCategoryList && !inControls && channelItems.length > 0) {
+        } else if (!inChannelList && !inCategoryList && !inControls && channelCount > 0) {
           const target = state.focusedChannelIndex > 0 ? state.focusedChannelIndex - 1 : 0;
           renderer.focusChannelByIndex(target);
         } else if (
@@ -124,15 +120,15 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
         break;
       case 'ArrowDown':
         event.preventDefault();
-        if (inChannelList && channelIdx >= 0 && channelIdx < channelItems.length - 1) {
+        if (inChannelList && channelIdx >= 0 && channelIdx < channelCount - 1) {
           renderer.focusChannelByIndex(channelIdx + 1);
         } else if (inCategoryList && categoryIdx >= 0 && categoryIdx < categoryItems.length - 1) {
           renderer.focusCategoryByIndex(categoryIdx + 1);
         } else if (onVideoContainer && preferredControl) {
           preferredControl.focus();
-        } else if (!inChannelList && !inCategoryList && !inControls && channelItems.length > 0) {
+        } else if (!inChannelList && !inCategoryList && !inControls && channelCount > 0) {
           const target =
-            state.focusedChannelIndex >= 0 && state.focusedChannelIndex < channelItems.length - 1
+            state.focusedChannelIndex >= 0 && state.focusedChannelIndex < channelCount - 1
               ? state.focusedChannelIndex + 1
               : 0;
           renderer.focusChannelByIndex(target);
@@ -150,7 +146,7 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
         event.preventDefault();
         if (inControls && controlIdx > 0) {
           controlButtons[controlIdx - 1].focus();
-        } else if (inControls && channelItems.length > 0) {
+        } else if (inControls && channelCount > 0) {
           const target = state.focusedChannelIndex >= 0 ? state.focusedChannelIndex : 0;
           renderer.focusChannelByIndex(target);
         } else if (onVideoContainer && preferredControl) {
@@ -161,7 +157,7 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
         break;
       case 'ArrowRight':
         event.preventDefault();
-        if (inCategoryList && channelItems.length > 0) {
+        if (inCategoryList && channelCount > 0) {
           const target = state.focusedChannelIndex >= 0 ? state.focusedChannelIndex : 0;
           renderer.focusChannelByIndex(target);
         } else if (inChannelList && preferredControl) {
@@ -217,7 +213,7 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
             currentChannel.dataset.name,
             currentChannel
           );
-        } else if (channelItems.length > 0) {
+        } else if (channelCount > 0) {
           event.preventDefault();
           const idx = state.focusedChannelIndex >= 0 ? state.focusedChannelIndex : 0;
           const item = renderer.focusChannelByIndex(idx);
@@ -244,11 +240,11 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
         break;
       case 'Home':
         event.preventDefault();
-        if (channelItems.length > 0) renderer.focusChannelByIndex(0);
+        if (channelCount > 0) renderer.focusChannelByIndex(0);
         break;
       case 'End':
         event.preventDefault();
-        if (channelItems.length > 0) renderer.focusChannelByIndex(channelItems.length - 1);
+        if (channelCount > 0) renderer.focusChannelByIndex(channelCount - 1);
         break;
       case 'f':
       case 'F':
@@ -266,18 +262,4 @@ export function setupNavigation({ state, elements, renderer, player, wakeUiFromN
       player.showControlsTemporarily();
     }
   });
-
-  document.addEventListener('focusin', (event) => {
-    if (
-      categoryList.contains(event.target) ||
-      channelList.contains(event.target) ||
-      event.target === searchInput
-    ) {
-      wakeUiFromNavigation();
-    }
-  });
-
-  categoryList.addEventListener('pointermove', wakeUiFromNavigation);
-  channelList.addEventListener('pointermove', wakeUiFromNavigation);
-  searchInput.addEventListener('focus', wakeUiFromNavigation);
 }

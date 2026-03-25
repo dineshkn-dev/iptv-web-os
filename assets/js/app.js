@@ -1,4 +1,3 @@
-import { createFocusMode } from './modules/focus-mode.js';
 import { setupNavigation } from './modules/navigation.js';
 import { fetchBasePlaylist } from './modules/playlist.js';
 import { createPlayerController } from './modules/player.js';
@@ -26,7 +25,7 @@ elements.videoContainer.appendChild(numberZap);
 elements.numberZap = numberZap;
 
 const state = createAppState();
-const focusMode = createFocusMode({ elements });
+let searchDebounceTimer = null;
 
 let player;
 
@@ -40,10 +39,6 @@ player = createPlayerController({
   state,
   elements,
   focusChannelByIndex: renderer.focusChannelByIndex,
-  scheduleUiDim: focusMode.scheduleUiDim,
-  wakeUiFromNavigation: focusMode.wakeUiFromNavigation,
-  clearUiDimTimer: focusMode.clearUiDimTimer,
-  setUiDimmed: focusMode.setUiDimmed,
 });
 
 setupNavigation({
@@ -51,14 +46,16 @@ setupNavigation({
   elements,
   renderer,
   player,
-  wakeUiFromNavigation: focusMode.wakeUiFromNavigation,
 });
 
 player.setupVideoControls();
 player.bindPlayerSurfaceInteractions();
 
 elements.searchInput.addEventListener('input', () => {
-  renderer.filterChannels(elements.searchInput.value, state.selectedGroup);
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    renderer.filterChannels(elements.searchInput.value, state.selectedGroup);
+  }, 180);
 });
 
 async function init() {
@@ -66,6 +63,12 @@ async function init() {
   try {
     elements.loading.classList.add('visible');
     state.channels = await fetchBasePlaylist();
+
+    const isWebOs = /web0s|webos|netcast|smarttv|hbbtv/i.test(navigator.userAgent);
+    const usePerformanceLite = isWebOs || state.channels.length > 500;
+    state.performanceLite = usePerformanceLite;
+    document.body.classList.toggle('perf-lite', usePerformanceLite);
+
     renderer.renderCategories();
     renderer.filterChannels();
     document.body.classList.add('app-ready');

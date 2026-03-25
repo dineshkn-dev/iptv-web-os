@@ -1,12 +1,4 @@
-export function createPlayerController({
-  state,
-  elements,
-  focusChannelByIndex,
-  scheduleUiDim,
-  wakeUiFromNavigation,
-  clearUiDimTimer,
-  setUiDimmed,
-}) {
+export function createPlayerController({ state, elements, focusChannelByIndex }) {
   const {
     video,
     channelList,
@@ -18,6 +10,26 @@ export function createPlayerController({
     videoControls,
     videoContainer,
   } = elements;
+
+  function escapeHtml(value = '') {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function buildErrorMarkup(message, channelName) {
+    const safeMessage = escapeHtml(message || 'Playback failed.');
+    const safeChannel = escapeHtml(channelName || state.activeChannel?.name || 'Unknown channel');
+    return `
+      <div class="error-title">Playback Error</div>
+      <div class="error-message">${safeMessage}</div>
+      <div class="error-meta">Channel: ${safeChannel}</div>
+      <div class="error-hint">Try another channel. Some IPTV streams are temporarily unavailable.</div>
+    `;
+  }
 
   function showChannelToast(name) {
     channelToast.textContent = name;
@@ -39,7 +51,6 @@ export function createPlayerController({
   function showControlsTemporarily() {
     videoControls.classList.add('visible');
     clearTimeout(state.controlsTimeout);
-    wakeUiFromNavigation();
     state.controlsTimeout = setTimeout(() => {
       if (video.paused) return;
       videoControls.classList.remove('visible');
@@ -50,19 +61,17 @@ export function createPlayerController({
     loading.classList.remove('visible');
     video.classList.add('playing');
     video.play().catch(() => {});
-    scheduleUiDim();
     showControlsTemporarily();
   }
 
   function clearPlayerError() {
     errorEl.classList.remove('visible');
+    errorEl.innerHTML = '';
   }
 
-  function handlePlaybackFailure(message) {
+  function handlePlaybackFailure(message, channelName) {
     loading.classList.remove('visible');
-    clearUiDimTimer();
-    setUiDimmed(false);
-    errorEl.textContent = message;
+    errorEl.innerHTML = buildErrorMarkup(message, channelName);
     errorEl.classList.add('visible');
   }
 
@@ -105,7 +114,7 @@ export function createPlayerController({
       state.hls.on(window.Hls.Events.MANIFEST_PARSED, handlePlaybackReady);
       state.hls.on(window.Hls.Events.ERROR, (_event, data) => {
         if (data.fatal) {
-          handlePlaybackFailure(`Stream error: ${data.type}`);
+          handlePlaybackFailure(`Stream error: ${data.type}`, name);
         }
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl') && isHlsUrl) {
@@ -117,7 +126,7 @@ export function createPlayerController({
     }
 
     video.onerror = () => {
-      handlePlaybackFailure('Failed to load stream. Channel may be offline.');
+      handlePlaybackFailure('Failed to load stream. Channel may be offline.', name);
     };
 
     nowPlaying.textContent = `Now playing: ${name}`;
@@ -150,10 +159,6 @@ export function createPlayerController({
   function setupVideoControls() {
     document.getElementById('btnChPrev').addEventListener('click', playPrevChannel);
     document.getElementById('btnChNext').addEventListener('click', playNextChannel);
-    document.getElementById('btnPlayPause').addEventListener('click', () => {
-      if (video.paused) video.play();
-      else video.pause();
-    });
     document.getElementById('btnFullscreen').addEventListener('click', toggleFullscreen);
   }
 
@@ -164,25 +169,6 @@ export function createPlayerController({
     });
     videoContainer.addEventListener('mousemove', showControlsTemporarily);
     videoContainer.addEventListener('keydown', showControlsTemporarily);
-
-    video.addEventListener('play', () => scheduleUiDim());
-    video.addEventListener('pause', () => {
-      clearUiDimTimer();
-      setUiDimmed(false);
-    });
-    video.addEventListener('ended', () => {
-      clearUiDimTimer();
-      setUiDimmed(false);
-    });
-
-    document.addEventListener('fullscreenchange', () => {
-      if (document.fullscreenElement) {
-        clearUiDimTimer();
-        setUiDimmed(false);
-      } else {
-        scheduleUiDim();
-      }
-    });
   }
 
   return {

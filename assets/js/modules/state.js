@@ -10,5 +10,6 @@ export function createAppState() {
     selectedGroup: '',
     numberBuffer: '',
     numberBufferTimer: null,
+    performanceLite: false,
   };
 }

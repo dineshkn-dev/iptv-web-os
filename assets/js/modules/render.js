@@ -13,6 +13,23 @@ function escapeAttr(value = '') {
   return escapeHtml(value).replace(/`/g, '&#96;');
 }
 
+const failedLogoUrls = new Set();
+const loadedLogoUrls = new Set();
+const DEFAULT_VIRTUAL_ITEM_HEIGHT = 68;
+const VIRTUAL_OVERSCAN = 8;
+
+function normalizeLogoUrl(raw = '') {
+  const value = String(raw).trim();
+  if (!value) return '';
+  if (value.startsWith('//')) return `https:${value}`;
+  if (value.startsWith('https://') || value.startsWith('http://') || value.startsWith('/')) {
+    return value;
+  }
+
+  // Many playlists include bare filenames like "logo.png" that 404 on this app.
+  return '';
+}
+
 function animateListSwap(listEl, callback) {
   listEl.classList.add('is-updating');
   callback();
@@ -30,6 +47,41 @@ function applyStagger(container, selector, max = 18) {
 
 export function createRenderer({ state, elements, onPlayChannel }) {
   const { categoryList, channelList, searchInput } = elements;
+  let channelTopSpacer = null;
+  let channelBottomSpacer = null;
+  let channelWindow = null;
+  let virtualStart = -1;
+  let virtualEnd = -1;
+  let virtualItemHeight = DEFAULT_VIRTUAL_ITEM_HEIGHT;
+  let virtualItemHeightMeasured = false;
+  let scrollRaf = 0;
+  let delegatedEventsBound = false;
+
+  function focusWithoutScroll(element) {
+    if (!element) return;
+    try {
+      element.focus({ preventScroll: true });
+    } catch {
+      element.focus();
+    }
+  }
+
+  function updateVirtualItemHeight() {
+    if (virtualItemHeightMeasured) return false;
+
+    const sample = channelWindow?.querySelector('.channel-item');
+    if (!sample) return false;
+
+    const style = window.getComputedStyle(sample);
+    const marginBottom = parseFloat(style.marginBottom || '0') || 0;
+    const measured = Math.round(sample.getBoundingClientRect().height + marginBottom);
+    const nextHeight = Math.max(44, measured);
+
+    virtualItemHeightMeasured = true;
+    if (Math.abs(nextHeight - virtualItemHeight) < 1) return false;
+    virtualItemHeight = nextHeight;
+    return true;
+  }
 
   function selectCategory(group) {
     state.selectedGroup = group;
@@ -43,8 +95,7 @@ export function createRenderer({ state, elements, onPlayChannel }) {
     const safeIndex = Math.max(0, Math.min(index, items.length - 1));
     state.focusedCategoryIndex = safeIndex;
     const item = items[safeIndex];
-    item.focus();
-    item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    focusWithoutScroll(item);
     return item;
   }
 
@@ -135,54 +186,190 @@ export function createRenderer({ state, elements, onPlayChannel }) {
     renderChannelList(state.filteredChannels);
   }
 
-  function renderChannelList(list) {
-    animateListSwap(channelList, () => {
-      channelList.innerHTML = list
-        .map((channel, index) => {
-          const isActive = state.activeChannel?.url === channel.url;
-          const channelNumber = channel.number || index + 1;
-          const channelUrl = channel.url || '';
-          const channelName = channel.name || 'Channel';
-          const channelGroup = channel.group || '';
-          const channelLogo = channel.logo || '';
-          return `
+  function ensureVirtualChannelList() {
+    if (channelTopSpacer && channelBottomSpacer && channelWindow) {
+      return;
+    }
+
+    channelList.innerHTML = `
+      <div class="channel-virtual-spacer" data-role="top"></div>
+      <div class="channel-virtual-window" data-role="window"></div>
+      <div class="channel-virtual-spacer" data-role="bottom"></div>
+    `;
+
+    channelTopSpacer = channelList.querySelector('[data-role="top"]');
+    channelBottomSpacer = channelList.querySelector('[data-role="bottom"]');
+    channelWindow = channelList.querySelector('[data-role="window"]');
+
+    if (!delegatedEventsBound) {
+      delegatedEventsBound = true;
+
+      channelList.addEventListener(
+        'scroll',
+        () => {
+          if (scrollRaf) return;
+          scrollRaf = requestAnimationFrame(() => {
+            scrollRaf = 0;
+            renderVisibleChannels();
+          });
+        },
+        { passive: true }
+      );
+
+      channelList.addEventListener('click', (event) => {
+        const item = event.target.closest('.channel-item');
+        if (!item) return;
+        state.focusedChannelIndex = parseInt(item.dataset.index, 10);
+        onPlayChannel(item.dataset.url, item.dataset.name, item);
+      });
+
+      channelList.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const item = event.target.closest('.channel-item');
+        if (!item) return;
+        event.preventDefault();
+        state.focusedChannelIndex = parseInt(item.dataset.index, 10);
+        onPlayChannel(item.dataset.url, item.dataset.name, item);
+      });
+    }
+  }
+
+  function renderVisibleChannels(force = false) {
+    ensureVirtualChannelList();
+
+    const total = state.filteredChannels.length;
+    if (!total) {
+      channelTopSpacer.style.height = '0px';
+      channelBottomSpacer.style.height = '0px';
+      channelWindow.innerHTML = '';
+      virtualStart = 0;
+      virtualEnd = 0;
+      return;
+    }
+
+    const viewportHeight = channelList.clientHeight || 400;
+    const scrollTop = channelList.scrollTop;
+    const start = Math.max(0, Math.floor(scrollTop / virtualItemHeight) - VIRTUAL_OVERSCAN);
+    const visibleCount = Math.ceil(viewportHeight / virtualItemHeight) + VIRTUAL_OVERSCAN * 2;
+    const end = Math.min(total, start + visibleCount);
+
+    if (!force && start === virtualStart && end === virtualEnd) {
+      return;
+    }
+
+    virtualStart = start;
+    virtualEnd = end;
+    channelTopSpacer.style.height = `${start * virtualItemHeight}px`;
+    channelBottomSpacer.style.height = `${(total - end) * virtualItemHeight}px`;
+
+    channelWindow.innerHTML = state.filteredChannels
+      .slice(start, end)
+      .map((channel, offset) => {
+        const index = start + offset;
+        const isActive = state.activeChannel?.url === channel.url;
+        const channelNumber = channel.number || index + 1;
+        const channelUrl = channel.url || '';
+        const channelName = channel.name || 'Channel';
+        const channelGroup = channel.group || '';
+        const channelLogo = normalizeLogoUrl(channel.logo || '');
+        const canLoadLogo = channelLogo && !failedLogoUrls.has(channelLogo);
+        const isLogoLoaded = canLoadLogo && loadedLogoUrls.has(channelLogo);
+        return `
     <div class="channel-item ${isActive ? 'active' : ''}" data-url="${escapeAttr(channelUrl)}" data-name="${escapeAttr(channelName)}" data-index="${index}" tabindex="0" role="button">
       <div class="channel-number">${channelNumber}</div>
-      <img class="channel-logo" src="${escapeAttr(channelLogo)}" alt="" onerror="this.style.display='none'">
+      <div class="channel-logo-wrap" aria-hidden="true">
+        <div class="channel-logo-fallback" title="Logo unavailable">TV</div>
+        ${
+          canLoadLogo
+            ? `<img class="channel-logo channel-logo-img ${isLogoLoaded ? 'loaded' : ''}" src="${escapeAttr(channelLogo)}" data-logo-url="${escapeAttr(channelLogo)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
+            : ''
+        }
+      </div>
       <div class="channel-info">
         <div class="channel-name">${escapeHtml(channelName || 'Unknown')}</div>
         <div class="channel-group">${escapeHtml(channelGroup)}</div>
       </div>
     </div>
   `;
-        })
-        .join('');
-    });
-    applyStagger(channelList, '.channel-item', 22);
+      })
+      .join('');
 
-    channelList.querySelectorAll('.channel-item').forEach((item) => {
-      const play = () => {
-        state.focusedChannelIndex = parseInt(item.dataset.index, 10);
-        onPlayChannel(item.dataset.url, item.dataset.name, item);
-      };
-      item.addEventListener('click', play);
-      item.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          play();
-        }
-      });
+    if (updateVirtualItemHeight()) {
+      virtualStart = -1;
+      virtualEnd = -1;
+      renderVisibleChannels(true);
+      return;
+    }
+
+    if (!document.body.classList.contains('perf-lite')) {
+      applyStagger(channelWindow, '.channel-item', 22);
+    }
+
+    channelWindow.querySelectorAll('.channel-item').forEach((item) => {
+      const logoWrap = item.querySelector('.channel-logo-wrap');
+      const logo = item.querySelector('.channel-logo-img[data-logo-url]');
+      if (!logo) return;
+
+      logo.addEventListener(
+        'load',
+        () => {
+          const loadedUrl = logo.dataset.logoUrl;
+          if (loadedUrl) loadedLogoUrls.add(loadedUrl);
+          logoWrap?.classList.add('loaded');
+          logo.classList.add('loaded');
+        },
+        { once: true }
+      );
+
+      logo.addEventListener(
+        'error',
+        () => {
+          const failedUrl = logo.dataset.logoUrl;
+          if (failedUrl) failedLogoUrls.add(failedUrl);
+          if (failedUrl) loadedLogoUrls.delete(failedUrl);
+          logoWrap?.classList.remove('loaded');
+          logo.style.display = 'none';
+          logo.removeAttribute('data-logo-url');
+        },
+        { once: true }
+      );
+    });
+  }
+
+  function renderChannelList(_list) {
+    ensureVirtualChannelList();
+    virtualItemHeightMeasured = false;
+    virtualStart = -1;
+    virtualEnd = -1;
+    channelList.classList.add('is-updating');
+    renderVisibleChannels(true);
+    requestAnimationFrame(() => {
+      channelList.classList.remove('is-updating');
     });
   }
 
   function focusChannelByIndex(index) {
-    const items = channelList.querySelectorAll('.channel-item');
-    if (!items.length) return null;
-    const safeIndex = Math.max(0, Math.min(index, items.length - 1));
+    const total = state.filteredChannels.length;
+    if (!total) return null;
+    const safeIndex = Math.max(0, Math.min(index, total - 1));
     state.focusedChannelIndex = safeIndex;
-    const item = items[safeIndex];
-    item.focus();
-    item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+
+    const top = safeIndex * virtualItemHeight;
+    const bottom = top + virtualItemHeight;
+    const viewportTop = channelList.scrollTop;
+    const viewportBottom = viewportTop + channelList.clientHeight;
+
+    if (top < viewportTop) {
+      channelList.scrollTop = top;
+    } else if (bottom > viewportBottom) {
+      channelList.scrollTop = Math.max(0, bottom - channelList.clientHeight);
+    }
+
+    renderVisibleChannels(true);
+
+    const item = channelList.querySelector(`.channel-item[data-index="${safeIndex}"]`);
+    if (!item) return null;
+    focusWithoutScroll(item);
     return item;
   }
 
