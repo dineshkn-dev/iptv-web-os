@@ -33,6 +33,23 @@ https://stream.test/live/espn.m3u8`;
     expect(channels[0].name).toBe('Channel One');
     expect(channels[0].url).toBe('https://stream.test/one.m3u8');
   });
+
+  it('recategorizes undefined and missing groups from channel names', () => {
+    const input = `#EXTM3U
+#EXTINF:-1 group-title="Undefined",Aaj Tak
+https://stream.test/news.m3u8
+#EXTINF:-1,9XM
+https://stream.test/music.m3u8
+#EXTINF:-1 group-title="Hindi - Undefined",B4U Movies
+https://stream.test/movies.m3u8`;
+
+    const channels = parseM3U(input);
+
+    expect(channels).toHaveLength(3);
+    expect(channels[0].group).toBe('News');
+    expect(channels[1].group).toBe('Music');
+    expect(channels[2].group).toBe('Hindi - Movies');
+  });
 });
 
 describe('getUniqueGroups', () => {
