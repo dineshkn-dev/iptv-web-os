@@ -66,7 +66,6 @@ export function createPlayerController({ state, elements, focusChannelByIndex })
   function handlePlaybackReady() {
     loading.classList.remove('visible');
     video.classList.add('playing');
-    video.play().catch(() => {});
     showControlsTemporarily();
   }
 
@@ -113,11 +112,15 @@ export function createPlayerController({ state, elements, focusChannelByIndex })
     if (isHlsUrl && typeof window.Hls !== 'undefined' && window.Hls.isSupported()) {
       state.hls = new window.Hls({
         enableWorker: true,
-        lowLatencyMode: true,
       });
       state.hls.loadSource(url);
       state.hls.attachMedia(video);
-      state.hls.on(window.Hls.Events.MANIFEST_PARSED, handlePlaybackReady);
+      state.hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+        // Start the decoder pipeline immediately so segments buffer in the background.
+        // Only reveal the video once the browser has decoded enough frames to display.
+        video.play().catch(() => {});
+        video.addEventListener('canplay', handlePlaybackReady, { once: true });
+      });
       state.hls.on(window.Hls.Events.ERROR, (_event, data) => {
         if (data.fatal) {
           handlePlaybackFailure(`Stream error: ${data.type}`, name);
@@ -125,10 +128,11 @@ export function createPlayerController({ state, elements, focusChannelByIndex })
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl') && isHlsUrl) {
       video.src = url;
-      video.addEventListener('loadedmetadata', handlePlaybackReady, { once: true });
+      video.play().catch(() => {});
+      video.addEventListener('canplay', handlePlaybackReady, { once: true });
     } else {
       video.src = url;
-      video.addEventListener('loadeddata', handlePlaybackReady, { once: true });
+      video.addEventListener('canplay', handlePlaybackReady, { once: true });
     }
 
     video.onerror = () => {
